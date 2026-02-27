@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Budget Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.balance {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.green { color: green; }
+.orange { color: orange; }
+.red { color: red; }
+
+.progress-bar {
+    height: 20px;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress {
+    height: 100%;
+    background: green;
+    width: 0%;
+}
+
+input, select, button {
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+canvas {
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Personal Budget Tracker</h1>
+
+<div class="card">
+    <h2>Set Total Budget</h2>
+    <input type="number" id="totalBudgetInput" placeholder="Enter total budget">
+    <button onclick="setBudget()">Save Budget</button>
+</div>
+
+<div class="card">
+    <h2>Remaining Balance</h2>
+    <div id="remainingBalance" class="balance">0</div>
+    <div class="progress-bar">
+        <div id="progress" class="progress"></div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Add Expense</h2>
+    <select id="category">
+        <option>Groceries</option>
+        <option>Transport</option>
+        <option>Rent</option>
+        <option>Entertainment</option>
+        <option>Bills</option>
+        <option>Other</option>
+    </select>
+    <input type="number" id="expenseAmount" placeholder="Enter amount">
+    <button onclick="addExpense()">Add Expense</button>
+</div>
+
+<div class="card">
+    <h2>Spending Overview</h2>
+    <canvas id="pieChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>Insights</h2>
+    <div id="insights"></div>
+</div>
+
+</div>
+
+<script>
+let totalBudget = localStorage.getItem("totalBudget") ? parseFloat(localStorage.getItem("totalBudget")) : 0;
+let expenses = localStorage.getItem("expenses") ? JSON.parse(localStorage.getItem("expenses")) : [];
+
+const pieCtx = document.getElementById('pieChart').getContext('2d');
+let pieChart;
+
+function setBudget() {
+    const input = document.getElementById("totalBudgetInput").value;
+    if (input) {
+        totalBudget = parseFloat(input);
+        localStorage.setItem("totalBudget", totalBudget);
+        updateUI();
+    }
+}
+
+function addExpense() {
+    const category = document.getElementById("category").value;
+    const amount = parseFloat(document.getElementById("expenseAmount").value);
+
+    if (!amount || amount <= 0) return;
+
+    expenses.push({ category, amount });
+    localStorage.setItem("expenses", JSON.stringify(expenses));
+
+    document.getElementById("expenseAmount").value = "";
+    updateUI();
+}
+
+function calculateTotalExpenses() {
+    return expenses.reduce((sum, item) => sum + item.amount, 0);
+}
+
+function updateUI() {
+    const totalExpenses = calculateTotalExpenses();
+    const remaining = totalBudget - totalExpenses;
+    const remainingEl = document.getElementById("remainingBalance");
+    const progress = document.getElementById("progress");
+
+    remainingEl.textContent = remaining.toFixed(2);
+
+    let percentUsed = totalBudget ? (totalExpenses / totalBudget) * 100 : 0;
+    progress.style.width = percentUsed + "%";
+
+    if (remaining > totalBudget * 0.5) {
+        remainingEl.className = "balance green";
+        progress.style.background = "green";
+    } else if (remaining > totalBudget * 0.2) {
+        remainingEl.className = "balance orange";
+        progress.style.background = "orange";
+    } else {
+        remainingEl.className = "balance red";
+        progress.style.background = "red";
+    }
+
+    updateChart();
+    updateInsights(remaining, totalExpenses);
+}
+
+function updateChart() {
+    const categoryTotals = {};
+    expenses.forEach(item => {
+        categoryTotals[item.category] = (categoryTotals[item.category] || 0) + item.amount;
+    });
+
+    const labels = Object.keys(categoryTotals);
+    const data = Object.values(categoryTotals);
+
+    if (pieChart) pieChart.destroy();
+
+    pieChart = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data
+            }]
+        }
+    });
+}
+
+function updateInsights(remaining, totalExpenses) {
+    const insights = document.getElementById("insights");
+
+    if (remaining > 0) {
+        insights.innerHTML = `You still have ${remaining.toFixed(2)} remaining. Consider saving it.`;
+    } else if (remaining < 0) {
+        insights.innerHTML = `You overspent by ${Math.abs(remaining).toFixed(2)}. Review your biggest spending category.`;
+    } else {
+        insights.innerHTML = "Perfect balance! You used your full budget.";
+    }
+}
+
+updateUI();
+</script>
+
+</body>
+</html>
