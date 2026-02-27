@@ -1,0 +1,9 @@
+{
+  "name": "Personal Budget Tracker",
+  "short_name": "BudgetTracker",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#6a0dad",
+  "theme_color": "#6a0dad",
+  "icons": []
+}
