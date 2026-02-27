@@ -7,73 +7,114 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f9;
+* {
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #6a0dad, #b57edc);
+    min-height: 100vh;
+    padding: 30px 15px;
+    color: #333;
 }
 
 .container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: auto;
 }
 
 h1 {
     text-align: center;
+    color: white;
+    margin-bottom: 30px;
+    font-size: 32px;
 }
 
 .card {
-    background: white;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
 }
 
 .balance {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: bold;
+    margin-top: 10px;
 }
 
-.green { color: green; }
-.orange { color: orange; }
-.red { color: red; }
+.green { color: #2ecc71; }
+.orange { color: #f39c12; }
+.red { color: #e74c3c; }
 
 .progress-bar {
-    height: 20px;
-    background: #ddd;
-    border-radius: 10px;
+    height: 18px;
+    background: #eee;
+    border-radius: 50px;
     overflow: hidden;
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
 .progress {
     height: 100%;
-    background: green;
     width: 0%;
+    background: linear-gradient(90deg, #6a0dad, #b57edc);
+    transition: width 0.4s ease;
 }
 
-input, select, button {
-    padding: 10px;
-    margin: 5px 0;
+input, select {
     width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
 }
 
 button {
-    background: #007bff;
-    color: white;
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border-radius: 8px;
     border: none;
+    background: #6a0dad;
+    color: white;
+    font-weight: bold;
     cursor: pointer;
-    border-radius: 5px;
+    transition: 0.3s ease;
 }
 
 button:hover {
-    background: #0056b3;
+    background: #4b0082;
 }
 
 canvas {
     margin-top: 20px;
+}
+
+#insights {
+    font-size: 15px;
+    padding: 15px;
+    background: #f3e6ff;
+    border-left: 5px solid #6a0dad;
+    border-radius: 8px;
+}
+
+@media (min-width: 768px) {
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
 }
 </style>
 </head>
@@ -82,13 +123,15 @@ canvas {
 
 <div class="container">
 
-<h1>Personal Budget Tracker</h1>
+<h1>💜 Personal Budget Tracker</h1>
 
 <div class="card">
     <h2>Set Total Budget</h2>
     <input type="number" id="totalBudgetInput" placeholder="Enter total budget">
     <button onclick="setBudget()">Save Budget</button>
 </div>
+
+<div class="grid">
 
 <div class="card">
     <h2>Remaining Balance</h2>
@@ -110,6 +153,8 @@ canvas {
     </select>
     <input type="number" id="expenseAmount" placeholder="Enter amount">
     <button onclick="addExpense()">Add Expense</button>
+</div>
+
 </div>
 
 <div class="card">
@@ -163,20 +208,17 @@ function updateUI() {
     const remainingEl = document.getElementById("remainingBalance");
     const progress = document.getElementById("progress");
 
-    remainingEl.textContent = remaining.toFixed(2);
+    remainingEl.textContent = "KES " + remaining.toFixed(2);
 
     let percentUsed = totalBudget ? (totalExpenses / totalBudget) * 100 : 0;
     progress.style.width = percentUsed + "%";
 
     if (remaining > totalBudget * 0.5) {
         remainingEl.className = "balance green";
-        progress.style.background = "green";
     } else if (remaining > totalBudget * 0.2) {
         remainingEl.className = "balance orange";
-        progress.style.background = "orange";
     } else {
         remainingEl.className = "balance red";
-        progress.style.background = "red";
     }
 
     updateChart();
@@ -205,15 +247,15 @@ function updateChart() {
     });
 }
 
-function updateInsights(remaining, totalExpenses) {
+function updateInsights(remaining) {
     const insights = document.getElementById("insights");
 
     if (remaining > 0) {
-        insights.innerHTML = `You still have ${remaining.toFixed(2)} remaining. Consider saving it.`;
+        insights.innerHTML = `Great job! You still have <b>KES ${remaining.toFixed(2)}</b> remaining. Consider saving or investing it.`;
     } else if (remaining < 0) {
-        insights.innerHTML = `You overspent by ${Math.abs(remaining).toFixed(2)}. Review your biggest spending category.`;
+        insights.innerHTML = `Warning! You overspent by <b>KES ${Math.abs(remaining).toFixed(2)}</b>. Review your spending categories.`;
     } else {
-        insights.innerHTML = "Perfect balance! You used your full budget.";
+        insights.innerHTML = "Perfect balance! You used your full budget wisely.";
     }
 }
 
