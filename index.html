@@ -4,100 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Personal Budget Tracker</title>
-
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#6a0dad">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,sans-serif}
-
-body{
-background:linear-gradient(135deg,#6a0dad,#b57edc);
-min-height:100vh;
-padding:20px;
-}
-
+body{background:linear-gradient(135deg,#6a0dad,#b57edc);min-height:100vh;padding:20px;color:#333;}
 .container{max-width:1000px;margin:auto}
-
-h1{text-align:center;color:white;margin-bottom:25px}
-
-.card{
-background:white;
-padding:20px;
-border-radius:15px;
-margin-bottom:20px;
-box-shadow:0 10px 25px rgba(0,0,0,0.15)
-}
-
-.balance{font-size:30px;font-weight:bold}
-
-.green{color:#2ecc71}
-.orange{color:#f39c12}
-.red{color:#e74c3c}
-
-.progress-bar{
-height:15px;
-background:#eee;
-border-radius:50px;
-overflow:hidden;
-margin-top:10px
-}
-
-.progress{
-height:100%;
-width:0%;
-background:#6a0dad;
-transition:0.3s
-}
-
-input,select{
-width:100%;
-padding:10px;
-margin-top:10px;
-border-radius:8px;
-border:1px solid #ddd
-}
-
-button{
-padding:10px;
-margin-top:10px;
-border:none;
-border-radius:8px;
-background:#6a0dad;
-color:white;
-cursor:pointer
-}
-
+h1{text-align:center;color:white;margin-bottom:20px}
+.card{background:white;padding:20px;border-radius:15px;margin-bottom:20px;box-shadow:0 10px 25px rgba(0,0,0,0.15)}
+.balance{font-size:30px;font-weight:bold;margin-top:10px}
+.green{color:#2ecc71}.orange{color:#f39c12}.red{color:#e74c3c}
+.progress-bar{height:15px;background:#eee;border-radius:50px;overflow:hidden;margin-top:10px}
+.progress{height:100%;width:0%;background:#6a0dad;transition:0.3s}
+input,select{width:100%;padding:10px;margin-top:10px;border-radius:8px;border:1px solid #ddd}
+button{padding:10px;margin-top:10px;border:none;border-radius:8px;background:#6a0dad;color:white;cursor:pointer}
 button:hover{background:#4b0082}
-
 .small-btn{background:#e74c3c;margin-left:5px}
 .edit-btn{background:#f39c12;margin-left:5px}
-
-table{
-width:100%;
-margin-top:15px;
-border-collapse:collapse
-}
-
-th,td{
-padding:8px;
-border-bottom:1px solid #ddd;
-text-align:left
-}
-
-.score{
-font-size:20px;
-font-weight:bold;
-color:#6a0dad;
-margin-top:10px
-}
-
-.chart-container{
-max-width:350px;
-margin:auto
-}
+table{width:100%;margin-top:15px;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+.score{font-size:20px;font-weight:bold;color:#6a0dad;margin-top:10px}
+.chart-container{max-width:350px;margin:auto}
+@media(min-width:768px){.grid{display:grid;grid-template-columns:1fr 1fr;gap:25px}}
 </style>
 </head>
 <body>
@@ -106,6 +36,7 @@ margin:auto
 
 <h1>💜 Personal Budget Tracker</h1>
 
+<!-- Budget Input -->
 <div class="card">
 <h3>Add to Budget</h3>
 <input type="number" id="budgetInput" placeholder="Enter amount">
@@ -113,15 +44,15 @@ margin:auto
 <button onclick="resetMonth()" class="small-btn">Monthly Reset</button>
 </div>
 
+<!-- Remaining Balance & Financial Score -->
 <div class="card">
 <h3>Remaining Balance</h3>
 <div id="remaining" class="balance">KES 0</div>
-<div class="progress-bar">
-<div id="progress" class="progress"></div>
-</div>
+<div class="progress-bar"><div id="progress" class="progress"></div></div>
 <div class="score" id="healthScore"></div>
 </div>
 
+<!-- Add Expense & Table -->
 <div class="card">
 <h3>Add Expense</h3>
 <select id="category">
@@ -137,41 +68,51 @@ margin:auto
 
 <table>
 <thead>
-<tr>
-<th>Category</th>
-<th>Amount</th>
-<th>Actions</th>
-</tr>
+<tr><th>Category</th><th>Amount</th><th>Date</th><th>Actions</th></tr>
 </thead>
 <tbody id="expenseTable"></tbody>
 </table>
 </div>
 
+<!-- Current Month Pie Chart -->
 <div class="card">
-<h3>Spending Chart</h3>
+<h3>Current Month Spending</h3>
 <div class="chart-container">
-<canvas id="chart"></canvas>
+<canvas id="pieChart"></canvas>
+</div>
+</div>
+
+<!-- History Bar Graph -->
+<div class="card">
+<h3>Monthly History (Last 6 Months)</h3>
+<div class="chart-container">
+<canvas id="barChart"></canvas>
 </div>
 </div>
 
 </div>
 
 <script>
-if('serviceWorker' in navigator){
-navigator.serviceWorker.register('service-worker.js')
-}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('service-worker.js')}
 
-let totalBudget = parseFloat(localStorage.getItem("totalBudget")) || 0;
-let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+// Data
+let totalBudget=parseFloat(localStorage.getItem("totalBudget"))||0;
+let expenses=JSON.parse(localStorage.getItem("expenses"))||[];
+let history=JSON.parse(localStorage.getItem("history"))||[];
 
-const ctx=document.getElementById("chart").getContext("2d");
-let pieChart;
+// Charts
+const pieCtx=document.getElementById("pieChart").getContext("2d");
+const barCtx=document.getElementById("barChart").getContext("2d");
+let pieChart,barChart;
 
+// Save data
 function saveData(){
 localStorage.setItem("totalBudget",totalBudget);
 localStorage.setItem("expenses",JSON.stringify(expenses));
+localStorage.setItem("history",JSON.stringify(history));
 }
 
+// Add budget
 function addBudget(){
 let val=parseFloat(document.getElementById("budgetInput").value);
 if(!val) return;
@@ -181,33 +122,33 @@ saveData();
 updateUI();
 }
 
+// Add expense
 function addExpense(){
 let cat=document.getElementById("category").value;
 let amt=parseFloat(document.getElementById("amount").value);
 if(!amt) return;
-expenses.push({category:cat,amount:amt});
+let date=new Date().toISOString().split('T')[0];
+expenses.push({category:cat,amount:amt,date});
 document.getElementById("amount").value="";
 saveData();
 updateUI();
 }
 
-function deleteExpense(index){
-expenses.splice(index,1);
-saveData();
-updateUI();
+// Delete/Edit expense
+function deleteExpense(i){expenses.splice(i,1);saveData();updateUI();}
+function editExpense(i){
+let newAmount=prompt("Edit amount:",expenses[i].amount);
+if(newAmount!==null){expenses[i].amount=parseFloat(newAmount);}
+let newDate=prompt("Edit date (YYYY-MM-DD):",expenses[i].date);
+if(newDate!==null){expenses[i].date=newDate;}
+saveData();updateUI();
 }
 
-function editExpense(index){
-let newAmount=prompt("Edit amount:",expenses[index].amount);
-if(newAmount!==null){
-expenses[index].amount=parseFloat(newAmount);
-saveData();
-updateUI();
-}
-}
-
+// Reset month (move to history)
 function resetMonth(){
-if(confirm("Reset all data for new month?")){
+if(confirm("Move this month data to history and reset?")){
+let month=new Date().toISOString().slice(0,7);
+history.push({month,totalBudget,expenses});
 totalBudget=0;
 expenses=[];
 saveData();
@@ -215,39 +156,42 @@ updateUI();
 }
 }
 
-function totalSpent(){
-return expenses.reduce((sum,e)=>sum+e.amount,0);
-}
+// Total spent
+function totalSpent(){return expenses.reduce((sum,e)=>sum+e.amount,0);}
 
+// Update UI
 function updateUI(){
 let spent=totalSpent();
 let remaining=totalBudget-spent;
-let percent=totalBudget? (spent/totalBudget)*100 :0;
+let percent=totalBudget?(spent/totalBudget)*100:0;
 
+// Balance
 let remainingEl=document.getElementById("remaining");
 remainingEl.textContent="KES "+remaining.toFixed(2);
-
 if(remaining>totalBudget*0.5){remainingEl.className="balance green"}
 else if(remaining>totalBudget*0.2){remainingEl.className="balance orange"}
 else{remainingEl.className="balance red"}
 
-document.getElementById("progress").style.width=percent+"%";
-
+// Financial Score
 let score=totalBudget? Math.max(0,100-percent):0;
 document.getElementById("healthScore").textContent="Financial Health Score: "+score.toFixed(0)+"/100";
 
+// Table
 updateTable();
-updateChart();
+// Charts
+updatePieChart();
+updateBarChart();
 }
 
+// Update Table
 function updateTable(){
 let table=document.getElementById("expenseTable");
 table.innerHTML="";
 expenses.forEach((e,i)=>{
-table.innerHTML+=`
-<tr>
+table.innerHTML+=`<tr>
 <td>${e.category}</td>
 <td>KES ${e.amount}</td>
+<td>${e.date}</td>
 <td>
 <button class="edit-btn" onclick="editExpense(${i})">Edit</button>
 <button class="small-btn" onclick="deleteExpense(${i})">Delete</button>
@@ -256,24 +200,28 @@ table.innerHTML+=`
 });
 }
 
-function updateChart(){
+// Pie chart
+function updatePieChart(){
 let data={};
-expenses.forEach(e=>{
-data[e.category]=(data[e.category]||0)+e.amount;
-});
-
+expenses.forEach(e=>{data[e.category]=(data[e.category]||0)+e.amount;});
 if(pieChart) pieChart.destroy();
-
-pieChart=new Chart(ctx,{
+pieChart=new Chart(pieCtx,{
 type:"pie",
-data:{
-labels:Object.keys(data),
-datasets:[{data:Object.values(data)}]
-},
-options:{
-responsive:true,
-maintainAspectRatio:false
+data:{labels:Object.keys(data),datasets:[{data:Object.values(data)}]},
+options:{responsive:true,maintainAspectRatio:false}
+});
 }
+
+// Bar chart (last 6 months)
+function updateBarChart(){
+let months=history.slice(-6);
+let labels=months.map(m=>m.month);
+let totals=months.map(m=>m.expenses.reduce((sum,e)=>sum+e.amount,0));
+if(barChart) barChart.destroy();
+barChart=new Chart(barCtx,{
+type:"bar",
+data:{labels:labels,datasets:[{label:"Spent KES",data:totals,backgroundColor:"#6a0dad"}]},
+options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}
 });
 }
 
